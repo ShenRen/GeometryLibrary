@@ -12,19 +12,12 @@
 
 namespace GPP
 {
+    class PointCloudInfo;
     class GPP_EXPORT RegistratePointCloud
     {
     public:
         RegistratePointCloud();
         ~RegistratePointCloud();
-
-        // Internal use api
-        // pointsRes should be 1-1 mapping to pointsFrom
-        // pointsRef = resultTransform * initTransform * pointsFrom;
-        // initTransform == NULL if initTransform is identity
-        // resultTransform should allocate memory before function calling
-        static ErrorCode _AlignPointPair(const std::vector<Vector3>& pointsRef, const std::vector<Vector3>& pointsFrom, 
-            Matrix4x4* resultTransform, const Matrix4x4* initTransform = NULL);
 
         // pointCloudRef = resultTransform * initTransform * pointCloudFrom;
         // if there are no marks, please set marksRef = NULL, marksFrom = NULL
@@ -33,7 +26,7 @@ namespace GPP
         // hasNormalInfo: if pointCloudRef and pointCloudFrom have normal information, registrate result will be more accurate and fast
         static ErrorCode ICPRegistrate(const IPointCloud* pointCloudRef, const std::vector<Vector3>* marksRef, 
             const IPointCloud* pointCloudFrom, const std::vector<Vector3>* marksFrom, Matrix4x4* resultTransform, 
-            const Matrix4x4* initTransform = NULL, bool hasNormalInfo = true);
+            const Matrix4x4* initTransform = NULL, bool hasNormalInfo = true);        
 
         // pointCloudRef = resultTransform * pointCloudFrom;
         // pointCloudRef and pointCloudFrom should have normals, if not, please calculate them first
@@ -42,6 +35,7 @@ namespace GPP
         static ErrorCode AlignPointCloud(const IPointCloud* pointCloudRef, const IPointCloud* pointCloudFrom, Matrix4x4* resultTransform, 
             Int maxSampleTripleCount = 500);
 
+        
         // pointCloudRef = resultTransform * pointCloudFrom;
         // pointCloudRef and pointCloudFrom should have normals, if not, please calculate them first
         // marksRef and marksFrom should have >= 3 points, no order requirement
@@ -57,5 +51,29 @@ namespace GPP
             std::vector<Matrix4x4>* resultTransformList, const std::vector<Matrix4x4>* initTransformList = NULL, 
             bool hasNormalInfo = true, Int fixId = 0, const std::vector<std::vector<Vector3> >* markList = NULL);
 
+
+        // Internal use
+
+        // pointCloudRef = resultTransform * pointCloudFrom;
+        // pointCloudRef and pointCloudFrom should have normals, if not, please calculate them first
+        // resultTransform should allocate memory before function calling
+        // accuracy: range [0, 1]. Larger value will get more accurate result, but speed will be slower.
+        static ErrorCode AccurateAlignPointCloud(const IPointCloud* pointCloudRef, const IPointCloud* pointCloudFrom, Matrix4x4* resultTransform, 
+            Real accuracy = 0);
+
+        // pointsRes should be 1-1 mapping to pointsFrom
+        // pointsRef = resultTransform * initTransform * pointsFrom;
+        // initTransform == NULL if initTransform is identity
+        // resultTransform should allocate memory before function calling
+        static ErrorCode _AlignPointPair(const std::vector<Vector3>& pointsRef, const std::vector<Vector3>& pointsFrom, 
+            Matrix4x4* resultTransform, const Matrix4x4* initTransform = NULL);
+
+        static ErrorCode _ICPRegistrate(const IPointCloud* pointCloudRef, PointCloudInfo& infoRef, const std::vector<Vector3>* marksRef, 
+            const IPointCloud* pointCloudFrom, PointCloudInfo& infoFrom, const std::vector<Vector3>* marksFrom, Matrix4x4* resultTransform, 
+            const Matrix4x4* initTransform = NULL, bool hasNormalInfo = true, Int fromSampleCount = 0, const Int* fromSampleIndex = NULL);
+
+        static ErrorCode _GlobalRegistrate(const std::vector<IPointCloud*>* pointCloudList, std::vector<PointCloudInfo*>& infoList,
+            Int maxIterationCount, std::vector<Matrix4x4>* resultTransformList, const std::vector<Matrix4x4>* initTransformList = NULL, 
+            bool hasNormalInfo = true, Int fixId = 0, const std::vector<std::vector<Vector3> >* markList = NULL);
     };
 }
